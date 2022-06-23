@@ -1,0 +1,9 @@
+Giấy phép MIT
+
+Copyright (c) 2022 Trần Quang Mạnh
+
+Theo đây, quyền được cấp miễn phí cho bất kỳ người nào có được bản sao của phần mềm này và các tệp tài liệu liên quan ("Phần mềm"), để giao dịch trong Phần mềm mà không bị hạn chế, bao gồm nhưng không giới hạn các quyền sử dụng, sao chép, sửa đổi, hợp nhất , xuất bản, phân phối, cấp phép con và/hoặc bán các bản sao của Phần mềm và cho phép những người được cung cấp Phần mềm làm như vậy, tuân theo các điều kiện sau:
+
+Thông báo bản quyền ở trên và thông báo cho phép này sẽ được bao gồm trong tất cả các bản sao hoặc các phần quan trọng của Phần mềm.
+
+PHẦN MỀM ĐƯỢC CUNG CẤP "NGUYÊN TRẠNG", KHÔNG BẢO HÀNH DƯỚI BẤT KỲ HÌNH THỨC NÀO, RÕ RÀNG HAY NGỤ Ý, BAO GỒM NHƯNG KHÔNG GIỚI HẠN ĐẢM BẢO VỀ KHẢ NĂNG BẢO TRÌ, PHÙ HỢP VỚI MỤC ĐÍCH CỤ THỂ VÀ KHÔNG VI PHẠM. TRONG MỌI TRƯỜNG HỢP SẼ KHÔNG CÓ TÁC GIẢ HOẶC CHỦ BẢN QUYỀN NÀO CHỊU TRÁCH NHIỆM VỀ BẤT KỲ KHIẾU NẠI, THIỆT HẠI HOẶC TRÁCH NHIỆM PHÁP LÝ KHÁC CHO DÙ LÀ MỘT HÀNH ĐỘNG CỦA HỢP ĐỒNG, CŨNG NHƯ CÁC VẤN ĐỀ PHÁT SINH HOẶC LIÊN QUAN ĐẾN PHẦN MỀM HOẶC VIỆC SỬ DỤNG HOẶC GIAO DỊCH TRONG PHẦN MỀM.

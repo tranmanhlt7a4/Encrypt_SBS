@@ -1,0 +1,24 @@
+<RCC>
+    <qresource prefix="/Image">
+        <file alias="aboutApp">assets/img/About-App.png</file>
+        <file alias="encrypt">assets/img/Encrypt.png</file>
+        <file alias="license">assets/img/License.png</file>
+        <file alias="open">assets/img/Open.png</file>
+        <file alias="quit">assets/img/Quit.png</file>
+        <file alias="save">assets/img/Save.png</file>
+        <file alias="saveAs">assets/img/Save-As.png</file>
+        <file alias="logoQt">assets/img/Logo-Qt.png</file>
+        <file alias="englishFlag">assets/img/English-Flag.png</file>
+        <file alias="vietnamFlag">assets/img/Vietnam-Flag.png</file>
+        <file alias="copy">assets/img/Copy.png</file>
+        <file alias="tick">assets/img/Tick.png</file>
+        <file alias="cross">assets/img/Cross.png</file>
+    </qresource>
+    <qresource prefix="/License">
+        <file alias="License_en_EN">assets/license/License_en_EN.txt</file>
+        <file alias="License_vi_VN">assets/license/License_vi_VN.txt</file>
+    </qresource>
+    <qresource prefix="/Translator">
+        <file alias="Encrypt_SBS_vi_VN">assets/translator/Encrypt_SBS_vi_VN.qm</file>
+    </qresource>
+</RCC>
