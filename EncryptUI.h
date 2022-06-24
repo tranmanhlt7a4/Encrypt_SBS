@@ -21,6 +21,8 @@
 #include <QStatusBar>
 #include <QTranslator>
 #include <QTextStream>
+#include <QFont>
+#include <QFontDialog>
 
 #include "EncryptCore.h"
 
@@ -39,6 +41,9 @@ private slots:
 //    void save();
 //    void saveAs();
 //    void closeFile();
+
+    void wordWrapEnable(bool isChecked);
+    void selectFont();
 
     void copyInputToClipboard();
     void copyOutputToClipboard();
@@ -63,6 +68,7 @@ private:
 
     void initMenuFile();
     void initMenuEdit();
+    void initMenuFormat();
     void initMenuSetting();
     void initMenuHelp();
 
@@ -88,6 +94,9 @@ private:
     QAction *m_pSelectAllInput;
     QAction *m_pSelectAllOutput;
     QAction *m_pClearAll;
+
+    QAction *m_pWordWrap;
+    QAction *m_pFont;
 
     QAction *m_pAutoDetectMode;
     QAction *m_pEnableStayOnTop;

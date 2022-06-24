@@ -15,6 +15,7 @@ EncryptUI::EncryptUI(bool& needChangeLang, QString& langCode, QString& layout, b
 
     initMenuFile();
     initMenuEdit();
+    initMenuFormat();
     initMenuSetting();
     initMenuHelp();
 
@@ -92,6 +93,32 @@ EncryptUI::~EncryptUI()
 
     m_pCurrentLayout = nullptr;
     m_pCurrentLanguage = nullptr;
+}
+
+void EncryptUI::wordWrapEnable(bool isChecked)
+{
+    if (isChecked) {
+        m_pInputContent->setWordWrapMode(QTextOption::WrapAtWordBoundaryOrAnywhere);
+        m_pOutputContent->setWordWrapMode(QTextOption::WrapAtWordBoundaryOrAnywhere);
+    }
+    else {
+        m_pInputContent->setWordWrapMode(QTextOption::NoWrap);
+        m_pOutputContent->setWordWrapMode(QTextOption::NoWrap);
+    }
+}
+
+void EncryptUI::selectFont()
+{
+    bool ok = false;
+    QFont font = QFontDialog::getFont(&ok, QFont(), this, tr("Font"));
+
+    if (!ok) {
+        return;
+    }
+
+
+    m_pInputContent->setFont(font);
+    m_pOutputContent->setFont(font);
 }
 
 void EncryptUI::copyInputToClipboard()
@@ -420,6 +447,21 @@ void EncryptUI::initMenuEdit()
     connect(m_pSelectAllInput, SIGNAL(triggered(bool)), m_pInputContent, SLOT(selectAll()));
     connect(m_pSelectAllOutput, SIGNAL(triggered(bool)), m_pOutputContent, SLOT(selectAll()));
     connect(m_pClearAll, SIGNAL(triggered(bool)), m_pInputContent, SLOT(clear()));
+}
+
+void EncryptUI::initMenuFormat()
+{
+    m_pWordWrap = new QAction(tr("Word wrap"));
+        m_pWordWrap->setCheckable(true);
+        m_pWordWrap->setChecked(m_pInputContent->wordWrapMode() == QTextOption::WrapAtWordBoundaryOrAnywhere);
+    m_pFont = new QAction(tr("Font..."));
+
+    QMenu *pMenuFormat = menuBar()->addMenu(tr("&Format"));
+        pMenuFormat->addAction(m_pWordWrap);
+        pMenuFormat->addAction(m_pFont);
+
+    connect(m_pWordWrap, SIGNAL(triggered(bool)), this, SLOT(wordWrapEnable(bool)));
+    connect(m_pFont, SIGNAL(triggered(bool)), this, SLOT(selectFont()));
 }
 
 void EncryptUI::initMenuSetting()
