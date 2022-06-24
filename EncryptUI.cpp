@@ -39,6 +39,9 @@ EncryptUI::~EncryptUI()
     delete m_pSelectAllOutput;
     delete m_pClearAll;
 
+    delete m_pWordWrap;
+    delete m_pFont;
+
     delete m_pAutoDetectMode;
     delete m_pEnableStayOnTop;
     delete m_pEnableStats;
@@ -69,6 +72,9 @@ EncryptUI::~EncryptUI()
     m_pSelectAllInput = nullptr;
     m_pSelectAllOutput = nullptr;
     m_pClearAll = nullptr;
+
+    m_pWordWrap = nullptr;
+    m_pFont = nullptr;
 
     m_pAutoDetectMode = nullptr;
     m_pEnableStayOnTop = nullptr;
