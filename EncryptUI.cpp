@@ -9,6 +9,13 @@ EncryptUI::EncryptUI(bool& needChangeLang, QString& langCode, QString& layout, b
       m_rOnTop(onTop),
       m_rEnableStats(enableStats),
       m_isAutoDetectRunning(false),
+      m_haveFileOpening(false),
+      m_isInputSaved(false),
+      m_isOutputSaved(false),
+      m_inputHaveChanged(false),
+      m_outputHaveChanged(false),
+      m_inputDir(""),
+      m_outputDir(""),
       m_encryptCore(tr("Encode"), autoDetectMode)
 {
     initUI();
@@ -18,6 +25,7 @@ EncryptUI::EncryptUI(bool& needChangeLang, QString& langCode, QString& layout, b
     initMenuFormat();
     initMenuSetting();
     initMenuHelp();
+    initConfirmWindow();
 
     initStatusBar();
 
@@ -63,6 +71,8 @@ EncryptUI::~EncryptUI()
     delete m_pCopyOutputToClipboard;
     delete m_pLayoutIO;
 
+    delete m_pConfirmWindow;
+
     m_pOpen = nullptr;
     m_pSaveOutput = nullptr;
     m_pSaveOutputAs = nullptr;
@@ -99,6 +109,187 @@ EncryptUI::~EncryptUI()
 
     m_pCurrentLayout = nullptr;
     m_pCurrentLanguage = nullptr;
+
+    m_pConfirmWindow = nullptr;
+}
+
+void EncryptUI::open()
+{
+    if (m_haveFileOpening) {
+        close();
+    }
+
+    m_inputDir = QFileDialog::getOpenFileName(this, tr("Open"), QString(), tr("Encrypt SBS files (*.enc);; Text Documents (*.txt);; All files (*.*)"));
+
+    if (m_inputDir.isEmpty()) {
+        return;
+    }
+
+
+    QFile inputFile(m_inputDir);
+
+    if (!inputFile.open(QIODevice::ReadOnly | QIODevice::Text)) {
+        QMessageBox::critical(this, tr("Error"), tr("Can't open this file!"));
+        return;
+    }
+
+    m_pLabelInput->setText(getFileName(m_inputDir));
+
+    QTextStream in(&inputFile);
+    m_pInputContent->setPlainText(in.readAll());
+
+    inputFile.close();
+
+    statusBar()->showMessage(tr("Open file: ") + m_inputDir, 6000);
+
+    m_haveFileOpening = true;
+    m_isInputSaved = true;
+    m_inputHaveChanged = false;
+}
+
+void EncryptUI::saveAll()
+{
+    m_pConfirmWindow->accept();
+    saveInput();
+    saveOutput();
+}
+
+void EncryptUI::saveInput(const bool &isSavedAs)
+{
+    m_pConfirmWindow->accept();
+
+    if (!m_inputHaveChanged && !isSavedAs) {
+        return;
+    }
+
+    if (!m_isInputSaved || isSavedAs) {
+        m_inputDir = QFileDialog::getSaveFileName(this, tr("Save input"), QString(), tr("Encrypt SBS files (*.enc);; Text Documents (*.txt);; All files (*.*)"));
+
+        if (m_inputDir.isEmpty()) {
+            QMessageBox::warning(this, tr("Attention"), tr("The input is not saved!"));
+            return;
+        }
+    }
+
+    QFile inputFile(m_inputDir);
+    if (!inputFile.open(QIODevice::WriteOnly | QIODevice::Text)) {
+        QMessageBox::critical(this, tr("Error"), tr("Can't save input file!"));
+        return;
+    }
+
+    m_pLabelInput->setText(getFileName(m_inputDir));
+
+    QTextStream out(&inputFile);
+    out << m_pInputContent->toPlainText();
+
+    inputFile.close();
+
+    statusBar()->showMessage(tr("Input file: ") + m_inputDir, 6000);
+
+    m_haveFileOpening = true;
+    m_isInputSaved = true;
+    m_inputHaveChanged = false;
+}
+
+void EncryptUI::saveOutput(const bool &isSaveAs)
+{
+    m_pConfirmWindow->accept();
+
+    if (!m_outputHaveChanged && !isSaveAs) {
+        return;
+    }
+
+    if (!m_isOutputSaved || isSaveAs) {
+        m_outputDir = QFileDialog::getSaveFileName(this, tr("Save output"), QString(), tr("Encrypt SBS files (*.enc);; Text Documents (*.txt);; All files (*.*)"));
+
+        if (m_outputDir.isEmpty()) {
+            QMessageBox::warning(this, tr("Attention"), tr("The output is not saved!"));
+            return;
+        }
+    }
+
+    QFile outputFile(m_outputDir);
+    if (!outputFile.open(QIODevice::WriteOnly | QIODevice::Text)) {
+        QMessageBox::critical(this, tr("Error"), tr("Can't save output file!"));
+        return;
+    }
+
+    m_pLabelOutput->setText(getFileName(m_outputDir));
+
+    QTextStream out(&outputFile);
+    out << m_pOutputContent->toPlainText();
+
+    outputFile.close();
+
+    statusBar()->showMessage(tr("Output file: ") + m_outputDir, 6000);
+
+    m_haveFileOpening = true;
+    m_isOutputSaved = true;
+    m_outputHaveChanged = false;
+}
+
+void EncryptUI::saveAllAs()
+{
+    m_pConfirmWindow->accept();
+
+    saveInputAs();
+    saveOutputAs();
+}
+
+void EncryptUI::saveInputAs()
+{
+    m_pConfirmWindow->accept();
+
+    saveInput(true);
+}
+
+void EncryptUI::saveOutputAs()
+{
+    m_pConfirmWindow->accept();
+
+    saveOutput(true);
+}
+
+void EncryptUI::doNotSave()
+{
+    m_pConfirmWindow->accept();
+
+    m_pInputContent->clear();
+    m_pOutputContent->clear();
+    m_pLabelInput->setText(tr("Input"));
+    m_pLabelOutput->setText(tr("Output"));
+    m_pInputContent->setFocus();
+
+    m_haveFileOpening = false;
+    m_inputDir = "";
+    m_outputDir = "";
+    m_isInputSaved = true;
+    m_isOutputSaved = true;
+}
+
+void EncryptUI::close()
+{
+    if (!m_haveFileOpening) {
+        statusBar()->showMessage(tr("Nothing to close!"), 6000);
+        return;
+    }
+
+    if (m_inputHaveChanged && m_outputHaveChanged) {
+        m_pConfirmWindow->exec();
+    }
+
+    m_pLabelInput->setText(tr("Input"));
+    m_pLabelOutput->setText(tr("Output"));
+    m_pInputContent->clear();
+    m_pOutputContent->clear();
+
+    m_haveFileOpening = false;
+    m_isInputSaved = false;
+    m_isOutputSaved = false;
+    m_inputHaveChanged = false;
+    m_outputHaveChanged = false;
+    m_inputDir = "";
+    m_outputDir = "";
 }
 
 void EncryptUI::wordWrapEnable(bool isChecked)
@@ -339,6 +530,11 @@ void EncryptUI::inputChanged()
     }
 
     showStats();
+
+    if (m_haveFileOpening) {
+        m_inputHaveChanged = true;
+        m_outputHaveChanged = true;
+    }
 }
 
 void EncryptUI::changeMode(const QString &mode)
@@ -351,7 +547,6 @@ void EncryptUI::changeMode(const QString &mode)
     m_pInputContent->setFocus();
     m_pInputContent->clear();
     m_pOutputContent->clear();
-
     statusBar()->showMessage(tr("Mode: ") + m_pModeSelect->currentText(), 6000);
 }
 
@@ -414,6 +609,8 @@ void EncryptUI::initMenuFile()
         m_pSaveOutput->setIcon(QIcon(":Image/save"));
     m_pSaveOutputAs = new QAction(tr("Save output &as..."));
         m_pSaveOutputAs->setIcon(QIcon(":Image/saveAs"));
+    m_pSaveAll = new QAction(tr("Save all..."));
+    m_pSaveAllAs = new QAction(tr("Save all as..."));
     m_pCloseOpeningFile = new QAction(tr("&Close file"));
     m_pQuit = new QAction(tr("&Quit"));
         m_pQuit->setIcon(QIcon(":Image/quit"));
@@ -427,14 +624,21 @@ void EncryptUI::initMenuFile()
         pMenuFile->addAction(m_pSaveOutput);
         pMenuFile->addAction(m_pSaveOutputAs);
         pMenuFile->addSeparator();
+        pMenuFile->addAction(m_pSaveAll);
+        pMenuFile->addAction(m_pSaveAllAs);
+        pMenuFile->addSeparator();
         pMenuFile->addAction(m_pCloseOpeningFile);
         pMenuFile->addSeparator();
         pMenuFile->addAction(m_pQuit);
 
     connect(m_pOpen, SIGNAL(triggered(bool)), this, SLOT(open()));
-    connect(m_pSaveOutput, SIGNAL(triggered(bool)), this, SLOT(save()));
-    connect(m_pSaveOutputAs, SIGNAL(triggered(bool)), this, SLOT(saveAs()));
-    connect(m_pCloseOpeningFile, SIGNAL(triggered(bool)), this, SLOT(closeFile()));
+    connect(m_pSaveAll, SIGNAL(triggered(bool)), this, SLOT(saveAll()));
+    connect(m_pSaveAllAs, SIGNAL(triggered(bool)), this, SLOT(saveAllAs()));
+    connect(m_pSaveInput, SIGNAL(triggered(bool)), this, SLOT(saveInput()));
+    connect(m_pSaveInputAs, SIGNAL(triggered(bool)), this, SLOT(saveInputAs()));
+    connect(m_pSaveOutput, SIGNAL(triggered(bool)), this, SLOT(saveOutput()));
+    connect(m_pSaveOutputAs, SIGNAL(triggered(bool)), this, SLOT(saveOutputAs()));
+    connect(m_pCloseOpeningFile, SIGNAL(triggered(bool)), this, SLOT(close()));
     connect(m_pQuit, SIGNAL(triggered(bool)), qApp, SLOT(quit()));
 }
 
@@ -574,6 +778,44 @@ void EncryptUI::initMenuHelp()
     connect(m_pLicense, SIGNAL(triggered(bool)), this, SLOT(showLicense()));
 }
 
+void EncryptUI::initConfirmWindow()
+{
+    m_pConfirmWindow = new QDialog(this);
+
+    QLabel *info = new QLabel(tr("Files have change. Do you want to do?"));
+
+    QPushButton *pSaveAll = new QPushButton(tr("Save all"));
+    QPushButton *pSaveInput = new QPushButton(tr("Only save input"));
+    QPushButton *pSaveOutput = new QPushButton(tr("Only save output"));
+    QPushButton *pSaveAllAs = new QPushButton(tr("Save all as"));
+    QPushButton *pSaveInputAs = new QPushButton(tr("Save input as"));
+    QPushButton *pSaveOutputAs = new QPushButton(tr("Save output as"));
+    QPushButton *pDoNotSave = new QPushButton(tr("Don't save"));
+    QPushButton *pCancel = new QPushButton(tr("Cancel"));
+
+    QGridLayout *mainLayout = new QGridLayout;
+        mainLayout->addWidget(info, 1, 1, 1, 4, Qt::AlignCenter);
+        mainLayout->addWidget(pSaveAll, 2, 1);
+        mainLayout->addWidget(pSaveInput, 2, 2);
+        mainLayout->addWidget(pSaveOutput, 2, 3);
+        mainLayout->addWidget(pDoNotSave, 2, 4);
+        mainLayout->addWidget(pSaveAllAs, 3, 1);
+        mainLayout->addWidget(pSaveInputAs, 3, 2);
+        mainLayout->addWidget(pSaveOutputAs, 3, 3);
+        mainLayout->addWidget(pCancel, 3, 4);
+
+    connect(pSaveAll, SIGNAL(clicked(bool)), this, SLOT(saveAll()));
+    connect(pSaveInput, SIGNAL(clicked(bool)), this, SLOT(saveInput()));
+    connect(pSaveOutput, SIGNAL(clicked(bool)), this, SLOT(saveOutput()));
+    connect(pSaveAllAs, SIGNAL(clicked(bool)), this, SLOT(saveAllAs()));
+    connect(pSaveInputAs, SIGNAL(clicked(bool)), this, SLOT(saveInputAs()));
+    connect(pSaveOutputAs, SIGNAL(clicked(bool)), this, SLOT(saveOutputAs()));
+    connect(pDoNotSave, SIGNAL(clicked(bool)), this, SLOT(doNotSave()));
+    connect(pCancel, SIGNAL(clicked(bool)), m_pConfirmWindow, SLOT(accept()));
+
+    m_pConfirmWindow->setLayout(mainLayout);
+}
+
 void EncryptUI::initUI()
 {
     m_pModeSelect = new QComboBox;
@@ -679,4 +921,9 @@ void EncryptUI::showStats()
     if (m_rEnableStats) {
         setWindowTitle(tr("Encrypt SBS") + " - " + tr("Input: %n word(s)", "", inputSize()) + " : " + tr("Output: %n word(s)", "", outputSize()));
     }
+}
+
+QString EncryptUI::getFileName(const QString &path)
+{
+    return path.right(path.size() - 1 - path.lastIndexOf("/"));
 }

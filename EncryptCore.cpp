@@ -91,6 +91,7 @@ QString EncryptCore::decode(const QString &content) const
         }
 
         if (c < 0 || c > 0xffff) {
+//            return QObject::tr("Error: The input is invalid!");
             return "";
         }
 

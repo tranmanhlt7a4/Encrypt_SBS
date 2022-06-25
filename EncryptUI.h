@@ -37,10 +37,15 @@ public:
     ~EncryptUI();
 
 private slots:
-//    void open();
-//    void save();
-//    void saveAs();
-//    void closeFile();
+    void open();
+    void saveAll();
+    void saveInput(const bool& isSavedAs = false);
+    void saveOutput(const bool& isSaveAs = false);
+    void saveAllAs();
+    void saveInputAs();
+    void saveOutputAs();
+    void doNotSave();
+    void close();
 
     void wordWrapEnable(bool isChecked);
     void selectFont();
@@ -72,6 +77,8 @@ private:
     void initMenuSetting();
     void initMenuHelp();
 
+    void initConfirmWindow();
+
     void initUI();
 
     void initStatusBar();
@@ -83,9 +90,13 @@ private:
     bool autoDetectMode(QString contentToTest);
     void showStats();
 
+    QString getFileName(const QString& path);
+
     QAction *m_pOpen;
+    QAction *m_pSaveAll;
     QAction *m_pSaveInput;
     QAction *m_pSaveInputAs;
+    QAction *m_pSaveAllAs;
     QAction *m_pSaveOutput;
     QAction *m_pSaveOutputAs;
     QAction *m_pCloseOpeningFile;
@@ -131,12 +142,16 @@ private:
 
     bool m_isAutoDetectRunning;
 
-//    bool m_haveChange;
-//    bool m_haveFileOpening;
-//    QString m_filePath;
-//    bool m_saved;
+    bool m_haveFileOpening;
+    bool m_isInputSaved;
+    bool m_isOutputSaved;
+    bool m_inputHaveChanged;
+    bool m_outputHaveChanged;
+    QString m_inputDir;
+    QString m_outputDir;
 
     EncryptCore m_encryptCore;
+    QDialog *m_pConfirmWindow;
 };
 
 #endif // ENCRYPTUI_H
