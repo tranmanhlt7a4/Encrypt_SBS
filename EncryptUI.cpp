@@ -1,13 +1,8 @@
 #include "EncryptUI.h"
 
-EncryptUI::EncryptUI(bool& needChangeLang, QString& langCode, QString& layout, bool &autoDetectMode, bool& onTop, bool &enableStats, QWidget *parent)
+EncryptUI::EncryptUI(bool& needChangeLang, Setting& setting, QWidget *parent)
     : QMainWindow(parent),
       m_rNeedChangeLang(needChangeLang),
-      m_rLanguageCode(langCode),
-      m_rLayout(layout),
-      m_rAutoDetectMode(autoDetectMode),
-      m_rOnTop(onTop),
-      m_rEnableStats(enableStats),
       m_isAutoDetectRunning(false),
       m_haveFileOpening(false),
       m_isInputSaved(false),
@@ -16,7 +11,8 @@ EncryptUI::EncryptUI(bool& needChangeLang, QString& langCode, QString& layout, b
       m_outputHaveChanged(false),
       m_inputDir(""),
       m_outputDir(""),
-      m_encryptCore(tr("Encode"), autoDetectMode)
+      m_encryptCore(tr("Encode"), setting.autoDetectMode()),
+      m_rSetting(setting)
 {
     initUI();
 
@@ -149,6 +145,7 @@ void EncryptUI::open()
 
 void EncryptUI::saveAll()
 {
+    m_cancelClicked = false;
     m_pConfirmWindow->accept();
     saveInput();
     saveOutput();
@@ -156,6 +153,7 @@ void EncryptUI::saveAll()
 
 void EncryptUI::saveInput(const bool &isSavedAs)
 {
+    m_cancelClicked = false;
     m_pConfirmWindow->accept();
 
     if (!m_inputHaveChanged && !isSavedAs) {
@@ -193,6 +191,7 @@ void EncryptUI::saveInput(const bool &isSavedAs)
 
 void EncryptUI::saveOutput(const bool &isSaveAs)
 {
+    m_cancelClicked = false;
     m_pConfirmWindow->accept();
 
     if (!m_outputHaveChanged && !isSaveAs) {
@@ -230,6 +229,7 @@ void EncryptUI::saveOutput(const bool &isSaveAs)
 
 void EncryptUI::saveAllAs()
 {
+    m_cancelClicked = false;
     m_pConfirmWindow->accept();
 
     saveInputAs();
@@ -238,6 +238,7 @@ void EncryptUI::saveAllAs()
 
 void EncryptUI::saveInputAs()
 {
+    m_cancelClicked = false;
     m_pConfirmWindow->accept();
 
     saveInput(true);
@@ -245,6 +246,7 @@ void EncryptUI::saveInputAs()
 
 void EncryptUI::saveOutputAs()
 {
+    m_cancelClicked = false;
     m_pConfirmWindow->accept();
 
     saveOutput(true);
@@ -252,6 +254,7 @@ void EncryptUI::saveOutputAs()
 
 void EncryptUI::doNotSave()
 {
+    m_cancelClicked = false;
     m_pConfirmWindow->accept();
 
     m_pInputContent->clear();
@@ -292,8 +295,15 @@ void EncryptUI::close()
     m_outputDir = "";
 }
 
+void EncryptUI::cancel()
+{
+    m_cancelClicked = true;
+    m_pConfirmWindow->accept();
+}
+
 void EncryptUI::wordWrapEnable(bool isChecked)
 {
+    m_rSetting.setWordWrap(isChecked);
     if (isChecked) {
         m_pInputContent->setWordWrapMode(QTextOption::WrapAtWordBoundaryOrAnywhere);
         m_pOutputContent->setWordWrapMode(QTextOption::WrapAtWordBoundaryOrAnywhere);
@@ -376,13 +386,13 @@ void EncryptUI::copyOutputToClipboard()
 
 void EncryptUI::enableAutoDetectMode(bool isChecked)
 {
-    m_rAutoDetectMode = isChecked;
+    m_rSetting.setAutoDetectMode(isChecked);
     m_encryptCore.setAutoDetectEnable(isChecked);
 }
 
 void EncryptUI::enableStayOnTop(bool isChecked)
 {
-    m_rOnTop = isChecked;
+    m_rSetting.setAlwaysOnTop(isChecked);
 
     if (isChecked) {
         setWindowFlag(Qt::WindowStaysOnTopHint);
@@ -400,7 +410,7 @@ void EncryptUI::enableStayOnTop(bool isChecked)
 
 void EncryptUI::enableStats(bool isChecked)
 {
-    m_rEnableStats = isChecked;
+    m_rSetting.setEnableStats(isChecked);
     setWindowTitle(tr("Encrypt SBS"));
     inputChanged();
 }
@@ -414,11 +424,11 @@ void EncryptUI::changeLanguage()
         return;
     }
 
-    if (m_rLanguageCode == "en_EN") {
-        m_rLanguageCode = "vi_VN";
+    if (m_rSetting.langCode() == "en_EN") {
+        m_rSetting.setLangCode("vi_VN");
     }
     else {
-        m_rLanguageCode = "en_EN";
+        m_rSetting.setLangCode("en_EN");
     }
 
     int ans = QMessageBox::question(this, tr("Confirm restart"), tr("Do you want to restart now to apply this change?"), QMessageBox::Yes | QMessageBox::No);
@@ -446,7 +456,7 @@ void EncryptUI::changeLayout()
     m_pCurrentLayout->setChecked(false);
     m_pCurrentLayout = layout;
     m_pLayoutIO->setDirection(m_pLayoutIO->direction() == QBoxLayout::TopToBottom ? QBoxLayout::LeftToRight : QBoxLayout::TopToBottom);
-    m_rLayout = m_pCurrentLayout->text() == "&Horizontal" ? "Horizontal" : "Vertical";
+    m_rSetting.setLayout(m_pCurrentLayout->text() == "&Horizontal" ? "Horizontal" : "Vertical");
 }
 
 void EncryptUI::aboutQt()
@@ -480,7 +490,7 @@ void EncryptUI::aboutApp()
 
 void EncryptUI::showLicense()
 {
-    QFile licenseFile(":License/License_" + m_rLanguageCode);
+    QFile licenseFile(":License/License_" + m_rSetting.langCode());
     QTextStream in(&licenseFile);
     QString content("");
 
@@ -508,10 +518,14 @@ void EncryptUI::inputChanged()
 
     resetCopyButton();
 
+    if (m_pInputContent->toPlainText().isEmpty()) {
+        m_pOutputContent->clear();
+    }
+
     QString content = m_encryptCore.start(m_pInputContent->toPlainText());
 
     if (!content.isEmpty()) {
-        if (m_rAutoDetectMode) {
+        if (m_rSetting.autoDetectMode()) {
             if (!autoDetectMode(content)) {
                 m_pOutputContent->setPlainText(content);
             }
@@ -597,6 +611,22 @@ bool EncryptUI::detectEncodeMode(const QString &contentToTest)
     return false;
 }
 
+void EncryptUI::closeEvent(QCloseEvent *event)
+{
+    m_cancelClicked = false;
+
+    if (m_haveFileOpening && (m_inputHaveChanged || m_outputHaveChanged)) {
+        m_pConfirmWindow->exec();
+    }
+
+    if (!m_cancelClicked) {
+        event->accept();
+    }
+    else {
+        event->ignore();
+    }
+}
+
 void EncryptUI::initMenuFile()
 {
     m_pOpen = new QAction(tr("&Open..."));
@@ -663,7 +693,8 @@ void EncryptUI::initMenuFormat()
 {
     m_pWordWrap = new QAction(tr("Word wrap"));
         m_pWordWrap->setCheckable(true);
-        m_pWordWrap->setChecked(m_pInputContent->wordWrapMode() == QTextOption::WrapAtWordBoundaryOrAnywhere);
+        m_pWordWrap->setChecked(m_rSetting.wordWrap());
+        wordWrapEnable(m_rSetting.wordWrap());
     m_pFont = new QAction(tr("Font..."));
 
     QMenu *pMenuFormat = menuBar()->addMenu(tr("&Format"));
@@ -680,31 +711,15 @@ void EncryptUI::initMenuSetting()
 
     m_pAutoDetectMode = new QAction(tr("Auto detect mode"));
         m_pAutoDetectMode->setCheckable(true);
-    if (m_rAutoDetectMode) {
-        m_pAutoDetectMode->setChecked(true);
-    }
-    else {
-        m_pAutoDetectMode->setChecked(false);
-    }
+        m_pAutoDetectMode->setChecked(m_rSetting.autoDetectMode());
     m_pEnableStayOnTop = new QAction(tr("Always on &top"));
         m_pEnableStayOnTop->setCheckable(true);
-    if (m_rOnTop) {
-        m_pEnableStayOnTop->setChecked(true);
-        setWindowFlag(Qt::WindowStaysOnTopHint);
-        show();
-        resize(QSize(450, 300));
-    }
-    else {
-        m_pEnableStayOnTop->setChecked(false);
-    }
+        m_pEnableStayOnTop->setChecked(m_rSetting.alwaysOnTop());
+        enableStayOnTop(m_rSetting.alwaysOnTop());
     m_pEnableStats = new QAction(tr("Show stats"));
         m_pEnableStats->setCheckable(true);
-    if (m_rEnableStats) {
-        m_pEnableStats->setChecked(true);
-    }
-    else {
-        m_pEnableStats->setChecked(false);
-    }
+        m_pEnableStats->setChecked(m_rSetting.enableStats());
+
     QMenu *pMenuSetting = menuBar()->addMenu(tr("&Setting"));
         pMenuSetting->addAction(m_pAutoDetectMode);
         pMenuSetting->addAction(m_pEnableStayOnTop);
@@ -721,7 +736,7 @@ void EncryptUI::initMenuSetting()
         m_pLanguageVi_VN->setCheckable(true);
         m_pLanguageVi_VN->setIcon(QIcon(":Image/vietnamFlag"));
 
-    if (m_rLanguageCode == "en_EN") {
+    if (m_rSetting.langCode() == "en_EN") {
         m_pLanguageEn_EN->setChecked(true);
         m_pLanguageVi_VN->setChecked(false);
         m_pCurrentLanguage = m_pLanguageEn_EN;
@@ -743,7 +758,7 @@ void EncryptUI::initMenuSetting()
     m_pSetLayoutVertical = new QAction(tr("&Vertical"));
         m_pSetLayoutVertical->setCheckable(true);
 
-    if (m_rLayout == "Horizontal") {
+    if (m_rSetting.layout() == "Horizontal") {
         m_pSetLayoutHorizontal->setChecked(true);
         m_pCurrentLayout = m_pSetLayoutHorizontal;
     }
@@ -811,7 +826,7 @@ void EncryptUI::initConfirmWindow()
     connect(pSaveInputAs, SIGNAL(clicked(bool)), this, SLOT(saveInputAs()));
     connect(pSaveOutputAs, SIGNAL(clicked(bool)), this, SLOT(saveOutputAs()));
     connect(pDoNotSave, SIGNAL(clicked(bool)), this, SLOT(doNotSave()));
-    connect(pCancel, SIGNAL(clicked(bool)), m_pConfirmWindow, SLOT(accept()));
+    connect(pCancel, SIGNAL(clicked(bool)), this, SLOT(cancel()));
 
     m_pConfirmWindow->setLayout(mainLayout);
 }
@@ -848,7 +863,7 @@ void EncryptUI::initUI()
     connect(m_pCopyInputToClipboard, SIGNAL(clicked()), this, SLOT(copyInputToClipboard()));
     connect(m_pCopyOutputToClipboard, SIGNAL(clicked()), this, SLOT(copyOutputToClipboard()));
 
-    if (m_rLayout == "Horizontal") {
+    if (m_rSetting.layout() == "Horizontal") {
         m_pLayoutIO = new QBoxLayout(QBoxLayout::LeftToRight);
     }
     else {
@@ -898,12 +913,12 @@ void EncryptUI::resetCopyButton()
     m_pCopyInputToClipboard->setText(tr("Copy input to clipboard"));
         m_pCopyInputToClipboard->setIcon(QIcon(":Image/copy"));
     m_pCopyOutputToClipboard->setText(tr("Copy output to clipboard"));
-    m_pCopyOutputToClipboard->setIcon(QIcon(":Image/copy"));
+        m_pCopyOutputToClipboard->setIcon(QIcon(":Image/copy"));
 }
 
 bool EncryptUI::autoDetectMode(QString contentToTest)
 {   
-    if (m_rAutoDetectMode) {
+    if (m_rSetting.autoDetectMode()) {
         if(detectEncodeMode(contentToTest)) {
             return true;
         }
@@ -918,7 +933,7 @@ bool EncryptUI::autoDetectMode(QString contentToTest)
 
 void EncryptUI::showStats()
 {
-    if (m_rEnableStats) {
+    if (m_rSetting.enableStats()) {
         setWindowTitle(tr("Encrypt SBS") + " - " + tr("Input: %n word(s)", "", inputSize()) + " : " + tr("Output: %n word(s)", "", outputSize()));
     }
 }

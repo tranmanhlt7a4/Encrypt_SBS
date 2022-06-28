@@ -25,6 +25,7 @@
 #include <QFontDialog>
 
 #include "EncryptCore.h"
+#include "Setting.h"
 
 #define FILE_NEED_DECODE_EXTENSION ".desbs"
 #define FILE_NEED_ENCODE_EXTENSION ".ensbs"
@@ -33,7 +34,7 @@ class EncryptUI : public QMainWindow {
     Q_OBJECT
 
 public:
-    EncryptUI(bool& changeLang, QString& langCode, QString& layout, bool& autoDetectMode, bool& onTop, bool& enableStats, QWidget* parent = nullptr);
+    EncryptUI(bool& changeLang,/* QString& langCode, QString& layout, bool& autoDetectMode, bool& onTop, bool& enableStats,*/Setting& setting, QWidget* parent = nullptr);
     ~EncryptUI();
 
 private slots:
@@ -46,6 +47,7 @@ private slots:
     void saveOutputAs();
     void doNotSave();
     void close();
+    void cancel();
 
     void wordWrapEnable(bool isChecked);
     void selectFont();
@@ -69,7 +71,7 @@ private slots:
     bool detectEncodeMode(const QString& contentToTest);
 
 private:
-//    void closeEvent(QCloseEvent* event);
+    void closeEvent(QCloseEvent* event);
 
     void initMenuFile();
     void initMenuEdit();
@@ -134,11 +136,6 @@ private:
     QAction *m_pCurrentLanguage;
 
     bool &m_rNeedChangeLang;
-    QString &m_rLanguageCode; //Format lang_COUNTRY. Ex: en_EN
-    QString &m_rLayout;
-    bool &m_rAutoDetectMode;
-    bool &m_rOnTop;
-    bool &m_rEnableStats;
 
     bool m_isAutoDetectRunning;
 
@@ -152,6 +149,8 @@ private:
 
     EncryptCore m_encryptCore;
     QDialog *m_pConfirmWindow;
+    Setting& m_rSetting;
+    bool m_cancelClicked;
 };
 
 #endif // ENCRYPTUI_H
