@@ -456,7 +456,7 @@ void EncryptUI::changeLayout()
     m_pCurrentLayout->setChecked(false);
     m_pCurrentLayout = layout;
     m_pLayoutIO->setDirection(m_pLayoutIO->direction() == QBoxLayout::TopToBottom ? QBoxLayout::LeftToRight : QBoxLayout::TopToBottom);
-    m_rSetting.setLayout(m_pCurrentLayout->text() == "&Horizontal" ? "Horizontal" : "Vertical");
+    m_rSetting.setLayout(m_pCurrentLayout->text() == tr("&Horizontal") ? "Horizontal" : "Vertical");
 }
 
 void EncryptUI::aboutQt()
